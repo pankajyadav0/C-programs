@@ -1,0 +1,9 @@
+#include<stdio.h>
+main()
+{
+int *L,a=100;
+L = a;
+printf("numder is %d\n",a);
+printf("number is %d\n",L);
+
+}

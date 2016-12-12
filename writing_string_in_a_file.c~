@@ -1,0 +1,10 @@
+#include<stdio.h>
+#include<string.h>
+main()
+{
+FILE *Q;
+char name[10];
+strcpy(name,"Hi I am Pankaj. Learning C");
+Q = fopen("pankaj.txt","w");
+fputs(name,Q);
+}

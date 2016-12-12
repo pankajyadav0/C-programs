@@ -1,0 +1,154 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+
+void initialise(int Nx, int Ny, double *c);
+void CalculateFPrime(int Nx, int Ny, double *c, double *g, double A);
+void CalculateLaplacian(int Nx, int Ny, double *c, double *nabla, double deltax, double deltay);
+void CalculateMu(int Nx, int Ny, double *g, double *nabla, double *mu, double kappa);
+
+
+int main(void){
+
+FILE *fp;
+int Nx = 150;
+int Ny = 150;
+int kappa = 1.0;
+int A = 1.0;
+int M = 1.0;
+double deltax = 0.5;
+double deltay = 0.5;
+double deltat = 5.0e-4;
+double time = 0.0;
+
+int i,j, J;
+int INDEX;
+int timesteps = 10000;
+
+double *c = (double *)malloc(Nx*Ny*sizeof(double));
+double *g = (double *)malloc(Nx*Ny*sizeof(double));
+double *nabla = (double *)malloc(Nx*Ny*sizeof(double));
+double *mu = (double *)malloc(Nx*Ny*sizeof(double));
+double *nablamu = (double *)malloc(Nx*Ny*sizeof(double));
+
+initialise(Nx,Ny,c);
+
+fp = fopen("InitialProfile","w");
+for(i=0; i<Nx; ++i){
+for(j=0; j<Ny; ++j){
+J = j+i*Ny;
+fprintf(fp,"%d %d %le\n",i,j,c[J]);
+}
+fprintf(fp,"\n");
+}
+fclose(fp);
+
+for(INDEX=0; INDEX < timesteps+1; ++INDEX){
+printf("timesteps = %d\n",INDEX);
+
+CalculateFPrime(Nx,Ny,c,g,A);
+CalculateLaplacian(Nx,Ny,c,nabla,deltax,deltay);
+CalculateMu(Nx,Ny,g,nabla,mu,kappa);
+CalculateLaplacian(Nx,Ny,mu,nablamu,deltax,deltay);
+
+for(i=0; i<Nx; ++i){
+	for(j=0; j<Ny; ++j){
+		J = j+i*Ny;
+		c[J] = c[J] + M*deltat*nablamu[J];
+		}
+	}
+}
+
+fp = fopen("FinalProfile","w");
+for(i=0; i<Nx; ++i){
+for(j=0; j<Ny; ++j){
+J = j+i*Ny;
+fprintf(fp,"%d %d %le\n",i,j,c[J]);
+}
+fprintf(fp,"\n");
+}
+fclose(fp);
+
+free(c);
+free(g);
+free(mu);
+free(nabla);
+free(nablamu);
+
+return 0;
+}
+
+void initialise(int Nx, int Ny, double *c){
+int i,j;
+int J;
+for (i = 0; i < Nx; i++){
+for (j = 0; j < Ny; j++) {
+J = j + i*Ny;
+
+if ( i < Nx/3 || i > 2*Nx/3){
+c[J] = 0.0;
+}
+else {
+c[J] = 1.0;
+     }
+}
+}
+}
+/*
+for(i=0; i<Nx; ++i){
+for(j=0; j<Ny; ++j){
+J = j+i*Ny;
+c[J] = 0.5 + 0.1* (0.5-((double)(rand)()/RAND_MAX));
+}}
+}*/
+
+
+
+void CalculateFPrime(int Nx, int Ny, double *c, double *g, double A){
+int i,j;
+int J;
+for(i=0; i<Nx; ++i){
+for(j=0; j<Ny; ++j){
+J = j+i*Ny;
+g[J] = 2*A*c[J]*(1-c[J])*(1-2.*c[J]);
+}}
+}
+
+void CalculateLaplacian(int Nx, int Ny, double *c, double *nabla, double deltax, double deltay){
+int i,j;
+int J;
+int temp1;
+int temp2;
+int N, W, S, E;
+
+temp1 = 1./(deltax*deltax);
+temp2 = 1./(deltay*deltay);
+
+for(i=0; i<Nx; ++i){
+for(j=0; j<Ny; ++j){
+J = j+i*Ny;
+W = j+(i-1)*Ny;
+E = j+(i+1)*Ny;
+S = (j-1)+i*Ny;
+N = (j+1)+i*Ny;
+if(i==0) W = j+(Nx-1)*Ny;
+if(i==(Nx-1)) E = j;
+if(j==0) S = (Ny-1)+i*Ny;
+if(j==(Ny-1)) N = i*Ny;
+nabla[J] = temp1*(c[E]+c[W]-2*c[J]) 
++ temp2*(c[N]+c[S]-2*c[J]);
+}}
+}
+
+void CalculateMu(int Nx, int Ny, double *g, double *nabla, double *mu, double kappa){
+int i,j;
+int J;
+for(i=0; i<Nx; ++i){
+for(j=0; j<Ny; ++j){
+J = j+i*Ny;
+mu[J] = g[J] - 2*kappa*nabla[J];
+}
+}
+}
+
+
